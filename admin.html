@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Panel — Absensi Cerdas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4fa;--s1:#fff;--s2:#f8fafd;--s3:#eef2f9;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#64748b;--faint:#94a3b8;
+  --blue:#3b82f6;--blue-d:#2563eb;--blue-g:rgba(59,130,246,.1);
+  --green:#10b981;--green-g:rgba(16,185,129,.1);
+  --red:#ef4444;--red-g:rgba(239,68,68,.1);
+  --amber:#f59e0b;
+  --sidebar:240px;--r:10px;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text)}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%)}
+.login-card{background:#1e293b;border:1px solid #334155;border-radius:16px;
+  padding:40px;width:100%;max-width:380px;
+  box-shadow:0 40px 80px rgba(0,0,0,.5);animation:cardIn .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.login-logo{width:52px;height:52px;background:var(--blue);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.login-card h1{font-size:24px;font-weight:800;color:#f8fafc;margin-bottom:6px}
+.login-card p{font-size:13px;color:#64748b;margin-bottom:28px}
+.l-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#64748b;margin-bottom:8px;display:block}
+.l-input{width:100%;padding:12px 14px;background:#0f172a;border:1px solid #334155;
+  border-radius:8px;color:#f8fafc;font-family:var(--mono);font-size:14px;
+  outline:none;transition:border-color .2s;margin-bottom:16px}
+.l-input:focus{border-color:var(--blue)}
+.l-btn{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;font-family:var(--font);font-size:14px;font-weight:700;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.l-btn:hover{background:var(--blue-d)}
+.l-btn:disabled{opacity:.5;cursor:not-allowed}
+.l-err{color:#f87171;font-size:12px;margin-top:-8px;margin-bottom:12px;display:none}
+.l-err.show{display:block}
+
+/* GAS URL input on login */
+.l-note{font-size:11px;color:#475569;margin-top:14px;text-align:center;line-height:1.6}
+.l-url-input{width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;
+  border-radius:8px;color:#94a3b8;font-family:var(--mono);font-size:11px;
+  outline:none;margin-bottom:4px;transition:border-color .2s}
+.l-url-input:focus{border-color:var(--blue)}
+
+/* LAYOUT */
+.layout{display:none;min-height:100vh}
+.layout.show{display:flex}
+.sidebar{width:var(--sidebar);flex-shrink:0;background:#0f172a;
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.brand{padding:20px 20px 16px;display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid #1e293b}
+.brand-icon{width:36px;height:36px;background:var(--blue);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-name{font-size:14px;font-weight:700;color:#f8fafc}
+.brand-sub{font-size:10px;color:#475569;font-family:var(--mono)}
+.nav{padding:12px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  cursor:pointer;margin-bottom:2px;font-size:13px;color:#64748b;transition:.15s}
+.nav-item:hover{background:#1e293b;color:#e2e8f0}
+.nav-item.active{background:#1d3461;color:var(--blue);font-weight:600}
+.nav-item svg{flex-shrink:0;width:16px;height:16px}
+.sidebar-footer{padding:14px;border-top:1px solid #1e293b;
+  font-size:11px;color:#334155;font-family:var(--mono);text-align:center}
+.online-dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--green);margin-right:5px;box-shadow:0 0 4px var(--green)}
+.main{flex:1;margin-left:var(--sidebar);display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--s1);border-bottom:1px solid var(--border);padding:0 28px;
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:40}
+.topbar-title{font-size:16px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.tb-badge{font-size:11px;font-family:var(--mono);padding:4px 10px;
+  background:var(--blue-g);color:var(--blue);border-radius:99px;
+  border:1px solid rgba(59,130,246,.2)}
+.content{padding:28px;flex:1}
+.section{display:none}.section.active{display:block}
+.section-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.section-title{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.section-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* STATS */
+.stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:14px;margin-bottom:24px}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.stat-box .label{font-size:11px;color:var(--muted);font-weight:500;
+  text-transform:uppercase;letter-spacing:.06em}
+.stat-box .val{font-size:28px;font-weight:800;line-height:1.1;margin-top:4px;font-family:var(--mono)}
+.val.blue{color:var(--blue)}.val.green{color:var(--green)}
+.val.red{color:var(--red)}.val.amber{color:var(--amber)}
+
+/* TABLE */
+.tcard{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.tcard-head{padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tcard-head h3{font-size:14px;font-weight:700}
+.overflow-x{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 16px;text-align:left;font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);background:var(--s2);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--s2)}
+.td-name{display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--blue-g);
+  color:var(--blue);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;flex-shrink:0}
+
+/* BADGES */
+.badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.badge-ok{background:var(--green-g);color:var(--green)}
+.badge-fail{background:var(--red-g);color:var(--red)}
+.badge-warn{background:rgba(245,158,11,.1);color:var(--amber)}
+.badge-idle{background:var(--s3);color:var(--muted)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+  border-radius:8px;border:none;cursor:pointer;
+  font-family:var(--font);font-size:13px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--blue-d)}
+.btn-danger{background:var(--red-g);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.18)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn-success{background:var(--green);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:center;justify-content:center;z-index:999;
+  backdrop-filter:blur(2px);padding:20px}
+.overlay.show{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,.2);animation:cardIn .3s cubic-bezier(.22,1,.36,1)}
+.mhead{padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.mhead h3{font-size:16px;font-weight:700}
+.mclose{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1}
+.mclose:hover{color:var(--text)}
+.mbody{padding:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;padding:10px 12px;background:var(--s2);
+  border:1px solid var(--border);border-radius:8px;color:var(--text);
+  font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-g)}
+
+/* FACE UPLOAD */
+.face-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;
+  text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:12px}
+.face-zone:hover,.face-zone.drag{border-color:var(--blue);background:var(--blue-g)}
+.face-zone p{font-size:13px;color:var(--muted);margin-top:8px}
+.face-zone .sub{font-size:11px;color:var(--faint);margin-top:4px}
+.cam-preview{width:100%;aspect-ratio:4/3;background:#000;border-radius:8px;
+  overflow:hidden;position:relative;margin-bottom:12px;display:none}
+.cam-preview video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cam-preview-info{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);
+  padding:6px 10px;font-size:10px;font-family:var(--mono);color:#94a3b8;
+  display:flex;justify-content:space-between}
+
+/* PROGRESS */
+.prog-wrap{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;
+  margin-top:8px;display:none}
+.prog-fill{height:100%;background:var(--blue);border-radius:2px;width:0%;transition:width .4s}
+
+/* FILTER */
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-input{padding:7px 12px;border:1px solid var(--border);border-radius:8px;
+  background:var(--s2);color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+.filter-input:focus{border-color:var(--blue)}
+
+/* SPINNER */
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite}
+.spin-dark{border-color:rgba(0,0,0,.12);border-top-color:var(--blue)}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;display:flex;
+  align-items:center;gap:8px;max-width:320px;
+  animation:slideR .3s cubic-bezier(.22,1,.36,1);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.toast.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+.toast.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.toast.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+@keyframes slideR{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+@media(max-width:768px){
+  .sidebar{display:none}.main{margin-left:0}
+  .topbar{padding:0 16px}.content{padding:16px}
+  .stats-strip{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <h1>Admin Panel</h1>
+    <p>Kelola karyawan &amp; data wajah</p>
+
+    <label class="l-label">URL Web App GAS</label>
+    <input id="l-url" class="l-url-input" type="text"
+      placeholder="https://script.google.com/macros/s/.../exec"
+      value=""/>
+    <div style="height:10px"></div>
+
+    <label class="l-label">Password Admin</label>
+    <input id="l-pass" class="l-input" type="password" placeholder="Masukkan password"
+      onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+    <div class="l-err" id="l-err"></div>
+    <button class="l-btn" id="l-btn" onclick="doAdminLogin()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path stroke-linecap="round" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M14 12H3"/>
+      </svg>
+      Masuk
+    </button>
+    <p class="l-note">URL GAS didapat setelah deploy Web App di Google Apps Script</p>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout" id="admin-layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="18" height="18">
+          <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4l3 3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Absensi Cerdas</div>
+        <div class="brand-sub">Admin Panel v2.0</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showSection('dashboard')" id="nav-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showSection('karyawan')" id="nav-karyawan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+        Data Karyawan
+      </div>
+      <div class="nav-item" onclick="showSection('log')" id="nav-log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <path stroke-linecap="round" d="M9 12h6M9 16h4"/>
+        </svg>
+        Log Absensi
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="online-dot"></span>
+      <span id="sb-clock"></span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span class="tb-badge" id="topbar-date"></span>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="doLogout()">Keluar</button>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="section active" id="sec-dashboard">
+        <div class="section-header">
+          <div><div class="section-title">Dashboard</div>
+            <div class="section-sub">Ringkasan sistem absensi</div></div>
+          <button class="btn btn-ghost" onclick="loadDashboard()">↻ Refresh</button>
+        </div>
+        <div class="stats-strip">
+          <div class="stat-box"><div class="label">Total Karyawan</div><div class="val blue" id="st-total">—</div></div>
+          <div class="stat-box"><div class="label">Wajah Terdaftar</div><div class="val green" id="st-face">—</div></div>
+          <div class="stat-box"><div class="label">Log Hari Ini</div><div class="val amber" id="st-today">—</div></div>
+          <div class="stat-box"><div class="label">Ditolak Hari Ini</div><div class="val red" id="st-reject">—</div></div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-head"><h3>10 Log Terbaru</h3></div>
+          <div class="overflow-x"><table><thead><tr>
+            <th>Waktu</th><th>Nama</th><th>Lokasi</th><th>Jarak</th><th>Status</th>
+          </tr></thead><tbody id="dash-log-body">
+            <tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8">Memuat...</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+
+      <!-- KARYAWAN -->
+      <div class="section" id="sec-karyawan">
+        <div class="section-header">
+          <div><div class="section-title">Data Karyawan</div>
+            <div class="section-sub">Kelola personel &amp; data wajah</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="loadKaryawan()">↻ Refresh</button>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Karyawan</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-head">
+            <h3>Daftar Karyawan</h3>
+            <input class="filter-input" type="text" placeholder="Cari nama / NIK..."
+              oninput="filterKaryawan(this.value)" style="width:200px"/>
+          </div>
+          <div class="overflow-x"><table><thead><tr>
+            <th>NIK</th><th>Nama</th><th>ID Lokasi</th><th>Data Wajah</th><th>Aksi</th>
+          </tr></thead><tbody id="emp-table-body">
+            <tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8">Memuat...</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="section" id="sec-log">
+        <div class="section-header">
+          <div><div class="section-title">Log Absensi</div>
+            <div class="section-sub">Riwayat lengkap absensi</div></div>
+          <div class="filter-bar">
+            <input class="filter-input" type="date" id="log-date-filter" onchange="applyLogFilter()"/>
+            <input class="filter-input" type="text" id="log-search" placeholder="Cari nama..."
+              oninput="applyLogFilter()" style="width:160px"/>
+            <button class="btn btn-ghost" onclick="loadLog()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="overflow-x"><table><thead><tr>
+            <th>Waktu</th><th>NIK</th><th>Nama</th><th>Lokasi</th>
+            <th>Jarak</th><th>Wajah</th><th>Lokasi</th><th>Status</th>
+          </tr></thead><tbody id="log-table-body">
+            <tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">Memuat...</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH -->
+<div class="overlay" id="modal-add">
+  <div class="modal">
+    <div class="mhead"><h3>Tambah Karyawan</h3>
+      <button class="mclose" onclick="closeModal('modal-add')">&times;</button></div>
+    <div class="mbody">
+      <div class="form-group">
+        <label class="form-label">NIK</label>
+        <input id="add-nik" class="form-input" type="text" placeholder="EMP001" autocapitalize="characters"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input id="add-nama" class="form-input" type="text" placeholder="Nama karyawan"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID Lokasi Penugasan</label>
+        <select id="add-lokasi" class="form-select">
+          <option value="">-- Pilih Lokasi --</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="btn-add-submit" onclick="submitAddKaryawan()"
+        style="width:100%;justify-content:center;padding:12px">Simpan Karyawan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WAJAH -->
+<div class="overlay" id="modal-face">
+  <div class="modal">
+    <div class="mhead">
+      <h3>Daftar Wajah: <span id="face-modal-nama">—</span></h3>
+      <button class="mclose" onclick="closeFaceModal()">&times;</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Upload foto atau gunakan kamera. AI akan mengekstrak data wajah dan menyimpan ke Google Drive.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-primary" id="tab-upload" onclick="setFaceTab('upload')"
+          style="flex:1;justify-content:center;font-size:12px;padding:8px">📁 Upload Foto</button>
+        <button class="btn btn-ghost" id="tab-cam" onclick="setFaceTab('cam')"
+          style="flex:1;justify-content:center;font-size:12px;padding:8px">📷 Kamera</button>
+      </div>
+
+      <div id="face-tab-upload">
+        <div class="face-zone" id="face-upload-zone"
+          onclick="document.getElementById('face-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleFileDrop(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" width="32" height="32">
+            <path stroke-linecap="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p>Klik atau drag foto wajah ke sini</p>
+          <p class="sub">JPG / PNG — Wajah harus terlihat jelas &amp; frontal</p>
+          <input type="file" id="face-file-input" hidden accept="image/*" onchange="handleFileSelect(this)"/>
+        </div>
+        <div id="upload-preview" style="display:none;margin-bottom:12px">
+          <img id="upload-preview-img" style="width:100%;max-height:200px;object-fit:cover;
+            border-radius:8px;border:1px solid var(--border)"/>
+          <div id="upload-det-result" style="margin-top:6px;font-size:12px;
+            color:var(--muted);font-family:var(--mono)"></div>
+        </div>
+      </div>
+
+      <div id="face-tab-cam" style="display:none">
+        <div class="cam-preview" id="face-cam-preview">
+          <video id="face-cam-video" autoplay playsinline muted></video>
+          <div class="cam-preview-info">
+            <span id="face-cam-status">Memuat kamera...</span>
+            <span id="face-cam-det">—</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="btn-face-capture" onclick="captureFromCam()"
+          style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px">
+          📸 Ambil Foto Sekarang
+        </button>
+      </div>
+
+      <div class="prog-wrap" id="face-prog-wrap">
+        <div class="prog-fill" id="face-prog-fill"></div>
+      </div>
+      <div id="face-status-text" style="font-size:12px;color:var(--muted);
+        margin-top:8px;font-family:var(--mono)"></div>
+
+      <button class="btn btn-success" id="btn-save-face" disabled onclick="saveFaceData()"
+        style="width:100%;justify-content:center;margin-top:14px;padding:12px">
+        ✓ Simpan Data Wajah
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+var GAS_URL = '';  // Diisi saat login dari input field
+
+var FACE_MODELS   = 'https://justadudewhohacks.github.io/face-api.js/models';
+var FACE_MODELS_FB= 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+
+var adm = {
+  employees:[], logs:[], locations:[],
+  faceNik:'', faceName:'', faceDescriptor:null,
+  faceStream:null, faceTab:'upload', aiLoaded:false
+};
+
+var allLogs = [];
+
+
+// ================================================================
+//  CLOCK
+// ================================================================
+setInterval(function(){
+  var now = new Date();
+  var sb = document.getElementById('sb-clock');
+  if(sb) sb.textContent = now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  var td = document.getElementById('topbar-date');
+  if(td) td.textContent = now.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+}, 1000);
+
+
+// ================================================================
+//  API HELPER
+// ================================================================
+function api(action, data) {
+  return fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify({ action:action, data:data||{} })
+  })
+  .then(function(res){ return res.json(); })
+  .catch(function(err){ throw new Error('Koneksi gagal: ' + err.message); });
+}
+
+
+// ================================================================
+//  AUTH
+// ================================================================
+function doAdminLogin() {
+  var url  = document.getElementById('l-url').value.trim();
+  var pass = document.getElementById('l-pass').value;
+  var err  = document.getElementById('l-err');
+  var btn  = document.getElementById('l-btn');
+
+  if (!url) { err.textContent='URL GAS wajib diisi.'; err.classList.add('show'); return; }
+  if (!pass){ err.textContent='Password wajib diisi.'; err.classList.add('show'); return; }
+
+  GAS_URL = url;
+  err.classList.remove('show');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Masuk...';
+
+  api('adminLogin', { password: pass })
+    .then(function(r){
+      btn.disabled=false; btn.innerHTML='Masuk';
+      if (r.ok) {
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('admin-layout').classList.add('show');
+        loadAll();
+      } else {
+        err.textContent = r.message||'Password salah.';
+        err.classList.add('show');
+      }
+    })
+    .catch(function(e){
+      btn.disabled=false; btn.innerHTML='Masuk';
+      err.textContent = e.message; err.classList.add('show');
+    });
+}
+
+document.getElementById('l-pass').addEventListener('keydown',function(e){
+  if(e.key==='Enter') doAdminLogin();
+});
+
+function doLogout(){
+  GAS_URL='';
+  document.getElementById('admin-layout').classList.remove('show');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-pass').value='';
+}
+
+function loadAll(){ loadLocations(); loadDashboard(); loadKaryawan(); loadLog(); }
+
+
+// ================================================================
+//  NAVIGATION
+// ================================================================
+function showSection(id){
+  ['dashboard','karyawan','log'].forEach(function(s){
+    document.getElementById('sec-'+s).classList.toggle('active',s===id);
+    document.getElementById('nav-'+s).classList.toggle('active',s===id);
+  });
+  var t={dashboard:'Dashboard',karyawan:'Data Karyawan',log:'Log Absensi'};
+  document.getElementById('topbar-title').textContent=t[id]||id;
+}
+
+
+// ================================================================
+//  LOAD DATA
+// ================================================================
+function loadLocations(){
+  api('getLokasiList').then(function(r){
+    if(!r.ok) return;
+    adm.locations=r.locations;
+    var sel=document.getElementById('add-lokasi');
+    sel.innerHTML='<option value="">-- Pilih Lokasi --</option>';
+    r.locations.forEach(function(l){
+      sel.innerHTML+='<option value="'+esc(l.id)+'">'+esc(l.id)+' — '+esc(l.nama)+'</option>';
+    });
+  });
+}
+
+function loadDashboard(){
+  api('getAttendanceLog').then(function(r){
+    if(!r.ok) return;
+    var todayStr = new Date().toISOString().substring(0,10);
+    var todayLogs = r.logs.filter(function(l){ return l.waktu&&l.waktu.startsWith(todayStr); });
+    var rejects   = todayLogs.filter(function(l){ return l.statusAkhir&&l.statusAkhir.includes('DITOLAK'); });
+    document.getElementById('st-today').textContent  = todayLogs.length;
+    document.getElementById('st-reject').textContent = rejects.length;
+
+    var rows = r.logs.slice(0,10).map(function(l){
+      var ok = l.statusAkhir&&l.statusAkhir.includes('VALID');
+      return '<tr>'+
+        '<td style="font-family:var(--mono);font-size:11px">'+esc(l.waktu)+'</td>'+
+        '<td><div class="td-name"><div class="avatar">'+initials(l.nama)+'</div>'+esc(l.nama)+'</div></td>'+
+        '<td>'+esc(l.lokasi)+'</td>'+
+        '<td style="font-family:var(--mono)">'+esc(l.jarak)+' m</td>'+
+        '<td><span class="badge '+(ok?'badge-ok':'badge-fail')+'">'+esc(l.statusAkhir)+'</span></td>'+
+        '</tr>';
+    }).join('');
+    document.getElementById('dash-log-body').innerHTML = rows ||
+      '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Belum ada data</td></tr>';
+  });
+
+  api('getEmployeeList').then(function(r){
+    if(!r.ok) return;
+    adm.employees=r.employees;
+    document.getElementById('st-total').textContent = r.employees.length;
+    document.getElementById('st-face').textContent  = r.employees.filter(function(e){return e.hasFace;}).length;
+  });
+}
+
+function loadKaryawan(){
+  api('getEmployeeList').then(function(r){
+    if(!r.ok){ toast(r.message,'err'); return; }
+    adm.employees=r.employees;
+    renderEmpTable(r.employees);
+  }).catch(function(e){ toast(e.message,'err'); });
+}
+
+function renderEmpTable(list){
+  if(!list||!list.length){
+    document.getElementById('emp-table-body').innerHTML=
+      '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Belum ada karyawan</td></tr>';
+    return;
+  }
+  document.getElementById('emp-table-body').innerHTML = list.map(function(e){
+    var fb = e.hasFace
+      ? '<span class="badge badge-ok">✓ Terdaftar</span>'
+      : '<span class="badge badge-warn">Belum ada</span>';
+    var ab =
+      '<div style="display:flex;gap:6px">'+
+      '<button class="btn" style="font-size:11px;padding:5px 10px;background:var(--blue-g);color:var(--blue);border:1px solid rgba(59,130,246,.2)"'+
+        ' onclick="openFaceModal(\''+esc(e.nik)+'\',\''+esc(e.nama)+'\')">'+
+        (e.hasFace?'✏️ Update':'📷 Daftar')+' Wajah</button>'+
+      '<button class="btn btn-danger" style="font-size:11px;padding:5px 10px"'+
+        ' onclick="doDeleteEmp(\''+esc(e.nik)+'\',\''+esc(e.nama)+'\')">Hapus</button>'+
+      '</div>';
+    return '<tr>'+
+      '<td style="font-family:var(--mono);font-weight:600">'+esc(e.nik)+'</td>'+
+      '<td><div class="td-name"><div class="avatar">'+initials(e.nama)+'</div>'+esc(e.nama)+'</div></td>'+
+      '<td><span class="badge badge-idle">'+esc(e.idLokasi)+'</span></td>'+
+      '<td>'+fb+'</td><td>'+ab+'</td></tr>';
+  }).join('');
+}
+
+function filterKaryawan(q){
+  var ql=q.toLowerCase();
+  renderEmpTable(adm.employees.filter(function(e){
+    return !q||e.nik.toLowerCase().includes(ql)||e.nama.toLowerCase().includes(ql);
+  }));
+}
+
+function loadLog(){
+  api('getAttendanceLog').then(function(r){
+    if(!r.ok){ toast(r.message,'err'); return; }
+    allLogs=r.logs; renderLogTable(allLogs);
+  }).catch(function(e){ toast(e.message,'err'); });
+}
+
+function applyLogFilter(){
+  var df=document.getElementById('log-date-filter').value;
+  var sf=document.getElementById('log-search').value.toLowerCase();
+  renderLogTable(allLogs.filter(function(l){
+    return (!df||l.waktu.startsWith(df))&&
+           (!sf||l.nama.toLowerCase().includes(sf)||l.nik.toLowerCase().includes(sf));
+  }));
+}
+
+function renderLogTable(list){
+  if(!list||!list.length){
+    document.getElementById('log-table-body').innerHTML=
+      '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Tidak ada data</td></tr>';
+    return;
+  }
+  document.getElementById('log-table-body').innerHTML = list.map(function(l){
+    var ok=l.statusAkhir&&l.statusAkhir.includes('VALID');
+    return '<tr>'+
+      '<td style="font-family:var(--mono);font-size:11px;white-space:nowrap">'+esc(l.waktu)+'</td>'+
+      '<td style="font-family:var(--mono);font-size:12px">'+esc(l.nik)+'</td>'+
+      '<td>'+esc(l.nama)+'</td>'+
+      '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.lokasi)+'</td>'+
+      '<td style="font-family:var(--mono)">'+esc(l.jarak)+' m</td>'+
+      '<td><span class="badge badge-ok">'+esc(l.statusWajah)+'</span></td>'+
+      '<td><span class="badge '+(l.statusLokasi==='Dalam Radius'?'badge-ok':'badge-fail')+'">'+esc(l.statusLokasi)+'</span></td>'+
+      '<td><span class="badge '+(ok?'badge-ok':'badge-fail')+'">'+esc(l.statusAkhir)+'</span></td>'+
+      '</tr>';
+  }).join('');
+}
+
+
+// ================================================================
+//  ADD / DELETE KARYAWAN
+// ================================================================
+function openAddModal(){
+  document.getElementById('add-nik').value='';
+  document.getElementById('add-nama').value='';
+  document.getElementById('add-lokasi').value='';
+  openModal('modal-add');
+}
+
+function submitAddKaryawan(){
+  var nik=document.getElementById('add-nik').value.trim();
+  var nama=document.getElementById('add-nama').value.trim();
+  var idLok=document.getElementById('add-lokasi').value;
+  if(!nik||!nama||!idLok){ toast('Semua field wajib diisi.','err'); return; }
+  var btn=document.getElementById('btn-add-submit');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Menyimpan...';
+  api('addEmployee',{nik,nama,idLokasi:idLok}).then(function(r){
+    btn.disabled=false; btn.innerHTML='Simpan Karyawan';
+    if(r.ok){ toast(r.message,'ok'); closeModal('modal-add'); loadKaryawan(); loadDashboard(); }
+    else toast(r.message,'err');
+  }).catch(function(e){ btn.disabled=false; btn.innerHTML='Simpan Karyawan'; toast(e.message,'err'); });
+}
+
+function doDeleteEmp(nik,nama){
+  if(!confirm('Hapus karyawan '+nama+' ('+nik+')?')) return;
+  api('deleteEmployee',{nik}).then(function(r){
+    if(r.ok){ toast(r.message,'ok'); loadKaryawan(); loadDashboard(); }
+    else toast(r.message,'err');
+  });
+}
+
+
+// ================================================================
+//  FACE MODAL
+// ================================================================
+function openFaceModal(nik,nama){
+  adm.faceNik=nik; adm.faceName=nama; adm.faceDescriptor=null;
+  document.getElementById('face-modal-nama').textContent=nama;
+  document.getElementById('face-status-text').textContent='';
+  document.getElementById('btn-save-face').disabled=true;
+  document.getElementById('upload-preview').style.display='none';
+  document.getElementById('upload-det-result').textContent='';
+  document.getElementById('face-prog-wrap').style.display='none';
+  document.getElementById('face-prog-fill').style.width='0%';
+  setFaceTab('upload');
+  openModal('modal-face');
+  loadFaceAI();
+}
+
+function closeFaceModal(){ stopFaceCam(); closeModal('modal-face'); adm.faceDescriptor=null; }
+
+function setFaceTab(tab){
+  adm.faceTab=tab;
+  var isUp=tab==='upload';
+  document.getElementById('face-tab-upload').style.display=isUp?'':'none';
+  document.getElementById('face-tab-cam').style.display=isUp?'none':'';
+  document.getElementById('tab-upload').className='btn '+(isUp?'btn-primary':'btn-ghost');
+  document.getElementById('tab-cam').className='btn '+(!isUp?'btn-primary':'btn-ghost');
+  if(!isUp) startFaceCam(); else stopFaceCam();
+}
+
+function loadFaceAI(){
+  if(adm.aiLoaded) return;
+  setFaceStatus('Memuat AI model...');
+  document.getElementById('face-prog-wrap').style.display='block';
+  setProgress(10);
+  function tryLoad(url){
+    Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(url),
+      faceapi.nets.faceLandmark68Net.loadFromUri(url),
+      faceapi.nets.faceRecognitionNet.loadFromUri(url)
+    ]).then(function(){
+      adm.aiLoaded=true;
+      setFaceStatus('AI siap. Upload atau ambil foto wajah.');
+      setProgress(100);
+      setTimeout(function(){document.getElementById('face-prog-wrap').style.display='none';},600);
+    }).catch(function(){ tryLoad(FACE_MODELS_FB); });
+  }
+  tryLoad(FACE_MODELS);
+}
+
+function startFaceCam(){
+  document.getElementById('face-cam-preview').style.display='block';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}}})
+    .then(function(s){
+      adm.faceStream=s;
+      document.getElementById('face-cam-video').srcObject=s;
+      document.getElementById('face-cam-status').textContent='Kamera aktif';
+    }).catch(function(e){
+      document.getElementById('face-cam-status').textContent='Gagal: '+e.message;
+    });
+}
+
+function stopFaceCam(){
+  if(adm.faceStream){ adm.faceStream.getTracks().forEach(function(t){t.stop();}); adm.faceStream=null; }
+  document.getElementById('face-cam-preview').style.display='none';
+}
+
+function captureFromCam(){
+  var v=document.getElementById('face-cam-video');
+  var cv=document.createElement('canvas');
+  cv.width=v.videoWidth; cv.height=v.videoHeight;
+  cv.getContext('2d').drawImage(v,0,0);
+  extractDescriptor(cv,'Foto dari kamera');
+}
+
+function handleFileSelect(input){
+  if(!input.files||!input.files[0]) return;
+  readImageFile(input.files[0]);
+}
+function handleFileDrop(e){
+  e.preventDefault();
+  document.getElementById('face-upload-zone').classList.remove('drag');
+  var f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')) readImageFile(f);
+}
+function readImageFile(file){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var cv=document.createElement('canvas');
+      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+      cv.getContext('2d').drawImage(img,0,0);
+      document.getElementById('upload-preview-img').src=e.target.result;
+      document.getElementById('upload-preview').style.display='block';
+      extractDescriptor(cv,'Foto diunggah');
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function extractDescriptor(canvas,source){
+  if(!adm.aiLoaded){ toast('AI masih dimuat, tunggu sebentar.','info'); return; }
+  setFaceStatus('Mendeteksi wajah...'); setProgress(40);
+  document.getElementById('btn-save-face').disabled=true;
+  adm.faceDescriptor=null;
+  faceapi.detectSingleFace(canvas,new faceapi.TinyFaceDetectorOptions({inputSize:416,scoreThreshold:.35}))
+    .withFaceLandmarks().withFaceDescriptor()
+    .then(function(det){
+      if(!det){
+        setFaceStatus('❌ Wajah tidak terdeteksi. Gunakan foto yang lebih jelas.'); setProgress(0); return;
+      }
+      adm.faceDescriptor=Array.from(det.descriptor);
+      setFaceStatus('✅ Wajah terdeteksi! Klik "Simpan Data Wajah".'); setProgress(100);
+      document.getElementById('btn-save-face').disabled=false;
+      document.getElementById('upload-det-result').textContent=
+        source+' — OK (skor: '+Math.round(det.detection.score*100)+'%)';
+    }).catch(function(e){ setFaceStatus('Error: '+e.message); setProgress(0); });
+}
+
+function saveFaceData(){
+  if(!adm.faceDescriptor){ toast('Belum ada data wajah.','err'); return; }
+  var btn=document.getElementById('btn-save-face');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Menyimpan ke Drive...';
+  setProgress(60);
+  api('saveFaceDescriptor',{nik:adm.faceNik,descriptor:adm.faceDescriptor}).then(function(r){
+    btn.disabled=false; btn.innerHTML='✓ Simpan Data Wajah';
+    if(r.ok){
+      setProgress(100); setFaceStatus('✅ Tersimpan!');
+      toast('Data wajah '+adm.faceName+' berhasil disimpan.','ok');
+      setTimeout(function(){ closeFaceModal(); loadKaryawan(); loadDashboard(); },1200);
+    } else {
+      setProgress(0); setFaceStatus('❌ Gagal: '+r.message); toast(r.message,'err');
+    }
+  }).catch(function(e){
+    btn.disabled=false; btn.innerHTML='✓ Simpan Data Wajah';
+    setProgress(0); toast(e.message,'err');
+  });
+}
+
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function setFaceStatus(t){ document.getElementById('face-status-text').textContent=t; }
+function setProgress(p){
+  document.getElementById('face-prog-wrap').style.display='block';
+  document.getElementById('face-prog-fill').style.width=p+'%';
+}
+function initials(n){
+  var p=String(n||'').trim().split(' ');
+  return p.length>=2?(p[0][0]||'')+(p[1][0]||''):String(n||'').substring(0,2).toUpperCase();
+}
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg,type){
+  var w=document.getElementById('toast-wrap'),d=document.createElement('div');
+  d.className='toast '+(type||'info');
+  d.textContent=(type==='ok'?'✓ ':type==='err'?'✗ ':'ℹ ')+msg;
+  w.appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},3500);
+}
+document.querySelectorAll('.overlay').forEach(function(ov){
+  ov.addEventListener('click',function(e){
+    if(e.target===ov){ ov.classList.remove('show'); stopFaceCam(); }
+  });
+});
+</script>
+</body>
+</html>
