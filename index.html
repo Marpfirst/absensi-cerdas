@@ -318,7 +318,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 //  Setelah deploy GAS, paste URL-nya di sini.
 //  Contoh: "https://script.google.com/macros/s/AKfycb.../exec"
 // ================================================================
-var GAS_URL = "GANTI_DENGAN_URL_GAS_ANDA";
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzxR07bzMgwMKP_xJUqRjvMPckTp5JTt0ofxcOok_j03syaPu2_bzEMPPgKr3KPYCwG/exec";
 
 
 // ================================================================
@@ -346,8 +346,8 @@ var state = {
 function api(action, data) {
   return fetch(GAS_URL, {
     method: 'POST',
-    // GAS tidak support CORS preflight, pakai text/plain agar tidak trigger preflight
-    headers: { 'Content-Type': 'text/plain' },
+    redirect: 'follow', // PENTING: Wajib ada untuk GAS
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain hindari CORS Preflight
     body: JSON.stringify({ action: action, data: data || {} })
   })
   .then(function(res) { return res.json(); })
